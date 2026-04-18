@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "के हुँदैछ नेपालमा",
+    "slug": "ke-hudai-cha-nepal",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#C1121F"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.kehudaicha.nepal"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#C1121F"
+      },
+      "package": "com.kehudaicha.nepal"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
