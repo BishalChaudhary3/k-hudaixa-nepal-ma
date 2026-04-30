@@ -1,86 +1,97 @@
 // ===================================================
-// 🌗 useTheme – Global Dark / Light Mode Context
+// 📰 useTheme – Neutral Grey Editorial Theme
 // ===================================================
 
-import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useRef } from 'react';
 import { Animated } from 'react-native';
 
 const ThemeContext = createContext(null);
 
-// ─── Light Palette ────────────────────────────────
+// ─── Light Theme — Neutral grey, clean & readable ──
 const LIGHT = {
   isDark: false,
 
-  // Nepal red stays the same in both modes
-  primary: '#C1121F',
-  primaryDark: '#9B0D18',
+  // Primary — muted, understated (not bright)
+  primary:     '#6B7280',     // neutral grey
+  primaryDark: '#4B5563',
 
-  // Backgrounds
-  background: '#F8F9FA',
-  cardBackground: '#FFFFFF',
-  surface: '#F0F2F5',
+  // Background — soft grey instead of white
+  background:     '#eeeedd',   // soft grey background
+  cardBackground: '#eeeedd',   // pure white for content cards
+  surface:        '#F9FAFB',   // slightly lighter than background
 
-  // Gold accent
-  accent: '#D4A017',
-  accentMuted: '#FFF3CD',
-  accentText: '#92400E',
+  // Accent — very subtle (almost invisible)
+  accent:      '#9CA3AF',
+  accentMuted: '#E5E7EB',
+  accentText:  '#6B7280',
 
-  // Text
-  textPrimary: '#1A1A2E',
-  textSecondary: '#6B7280',
-  textMuted: '#9CA3AF',
+  // Text — neutral blacks and greys
+  textPrimary:   '#111827',    // almost black but softer
+  textSecondary: '#4B5563',    // medium grey
+  textMuted:     '#71797E',    // light grey
 
-  // UI
-  border: '#E5E7EB',
-  divider: '#F3F4F6',
-  shadow: '#000000',
+  // UI — subtle separators
+  border:  '#E5E7EB',
+  divider: '#F0F0F0',
+  shadow:  '#000000',
 
-  // Skeleton
-  skeletonBase: '#E5E7EB',
-  skeletonHighlight: '#F9FAFB',
+  // Skeleton — subtle shimmer
+  skeletonBase:      '#E5E7EB',
+  skeletonHighlight: '#F3F4F6',
 
-  // Status bar
-  statusBarStyle: 'light',
+  statusBarStyle: 'dark',
 };
 
-// ─── Dark Palette ─────────────────────────────────
+// ─── Dark Theme — Grey-based dark mode ─────────────
 const DARK = {
   isDark: true,
 
-  primary: '#C1121F',
-  primaryDark: '#9B0D18',
+  primary:     '#9CA3AF',
+  primaryDark: '#6B7280',
 
-  background: '#0F0F13',
-  cardBackground: '#1C1C24',
-  surface: '#16161E',
+  // Dark grey (not black, not warm)
+  background:     '#1F2937',   // dark grey-blue
+  cardBackground: '#1F2937',   // lighter dark grey
+  surface:        '#2D3748',
 
-  accent: '#D4A017',
-  accentMuted: '#2A2008',
-  accentText: '#F0C040',
+  accent:      '#6B7280',
+  accentMuted: '#1F2937',
+  accentText:  '#9CA3AF',
 
-  textPrimary: '#F1F1F5',
-  textSecondary: '#9CA3AF',
-  textMuted: '#6B7280',
+  // Text — soft light greys
+  textPrimary:   '#F9FAFB',
+  textSecondary: '#D1D5DB',
+  textMuted:     '#9CA3AF',
 
-  border: '#2A2A38',
-  divider: '#1E1E28',
-  shadow: '#000000',
+  border:  '#4B5563',
+  divider: '#374151',
+  shadow:  '#000000',
 
-  skeletonBase: '#2A2A38',
-  skeletonHighlight: '#32323E',
+  skeletonBase:      '#374151',
+  skeletonHighlight: '#4B5563',
 
   statusBarStyle: 'light',
 };
 
+// ─── Provider ─────────────────────────────────────
 export function ThemeProvider({ children }) {
   const [isDark, setIsDark] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const toggleTheme = () => {
     Animated.sequence([
-      Animated.timing(fadeAnim, { toValue: 0.85, duration: 120, useNativeDriver: true }),
-      Animated.timing(fadeAnim, { toValue: 1, duration: 180, useNativeDriver: true }),
+      Animated.timing(fadeAnim, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
     ]).start();
+
     setIsDark(prev => !prev);
   };
 
@@ -93,6 +104,7 @@ export function ThemeProvider({ children }) {
   );
 }
 
+// ─── Hook ─────────────────────────────────────────
 export function useTheme() {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error('useTheme must be used within ThemeProvider');

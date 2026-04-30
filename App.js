@@ -8,6 +8,10 @@ import HomeScreen from './screens/HomeScreen';
 // Inner wrapper so StatusBar can read the theme
 function AppInner() {
   const { isDark } = useTheme();
+
+ // ADD THIS — remove after first run
+  //useEffect(() => { seedDummyData(); }, []);
+
   return (
     <>
       <StatusBar style="light" backgroundColor="#C1121F" />

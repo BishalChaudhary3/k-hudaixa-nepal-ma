@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>के हुँदैछ नेपालमा — Admin</title>
+
+  <!-- Firebase SDK (v10 compat via CDN) -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <style>
+    /* ─── Reset & Base ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red:        #B5181F;
+      --red-dark:   #9B0D18;
+      --red-light:  #fee2e2;
+      --gold:       #C8910A;
+      --gold-light: #FFF9EB;
+      --green:      #2E7D4F;
+      --green-light:#ECFDF5;
+      --bg:         #F5F0E8;
+      --card:       #FDFAF4;
+      --border:     #DDD7CC;
+      --text:       #1E1A14;
+      --muted:      #5C5347;
+      --light:      #EDE8DF;
+      --shadow:     0 2px 16px rgba(0,0,0,0.08);
+      --radius:     14px;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ─── Login Screen ──────────────────────────────── */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .login-card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+      text-align: center;
+    }
+    .login-flag { font-size: 52px; margin-bottom: 16px; }
+    .login-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+    .login-sub { font-size: 14px; color: var(--muted); margin-bottom: 32px; }
+    .login-input {
+      width: 100%;
+      padding: 14px 18px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 16px;
+      text-align: center;
+      letter-spacing: 4px;
+      outline: none;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    .login-input:focus { border-color: var(--red); }
+    .login-error {
+      color: var(--red);
+      font-size: 13px;
+      margin-bottom: 12px;
+      min-height: 18px;
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--red);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-primary:hover  { background: var(--red-dark); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ─── Main App Layout ───────────────────────────── */
+    #app { display: none; }
+    #app.visible { display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* Header */
+    .app-header {
+      background: var(--red);
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-logo { font-size: 20px; }
+    .header-title { color: white; font-size: 16px; font-weight: 800; letter-spacing: -0.3px; }
+    .header-sub { color: rgba(255,255,255,0.65); font-size: 12px; }
+    .btn-logout {
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,0.28); }
+
+    /* Tab nav */
+    .tab-nav {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      padding: 0 32px;
+    }
+    .tab-btn {
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      border: none;
+      border-bottom: 3px solid transparent;
+      background: none;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tab-btn.active { color: var(--red); border-bottom-color: var(--red); }
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    /* Main content */
+    .main { flex: 1; padding: 32px; max-width: 900px; margin: 0 auto; width: 100%; }
+
+    /* ─── Cards & Forms ────────────────────────────── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    input[type="text"], input[type="url"], textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      resize: vertical;
+      transition: border-color 0.2s;
+      background: var(--bg);
+      color: var(--text);
+    }
+    input:focus, textarea:focus { border-color: var(--red); background: white; }
+    textarea { min-height: 90px; line-height: 1.5; }
+    textarea.tall { min-height: 140px; }
+    .char-count { font-size: 11px; color: var(--muted); text-align: right; }
+
+    /* Image preview */
+    .img-preview {
+      width: 100%;
+      height: 180px;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-top: 10px;
+      display: none;
+      border: 1px solid var(--border);
+    }
+
+    /* Category grid */
+    .cat-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .cat-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: var(--light);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    .cat-chip:hover { border-color: #aaa; color: var(--text); }
+    .cat-chip.selected { color: white; border-color: transparent; }
+
+    /* Breaking toggle */
+    .breaking-toggle {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .breaking-toggle:hover { border-color: var(--red); }
+    .breaking-toggle.on { border-color: var(--red); background: var(--red-light); }
+    .breaking-icon { font-size: 22px; }
+    .breaking-text { flex: 1; }
+    .breaking-label { font-size: 14px; font-weight: 700; color: var(--text); }
+    .breaking-desc  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .breaking-check {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: white;
+      transition: background 0.2s;
+    }
+    .breaking-toggle.on .breaking-check { background: var(--red); }
+    .breaking-toggle.on .breaking-check::after { content: '✓'; }
+
+    /* Preview strip */
+    .preview-strip {
+      border: 1.5px dashed var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      background: var(--light);
+    }
+    .preview-label { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .preview-title { font-size: 15px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .preview-summary { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+    /* Feedback messages */
+    .msg-error   { background: var(--red-light);   color: var(--red);   padding: 12px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+    .msg-success { background: var(--green-light); color: var(--green); padding: 12px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+    .msg-hidden  { display: none; }
+
+    /* Action buttons */
+    .btn-row { display: flex; gap: 10px; margin-top: 4px; }
+    .btn-submit {
+      flex: 1;
+      padding: 14px;
+      background: var(--red);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover    { background: var(--red-dark); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-clear {
+      padding: 14px 20px;
+      background: none;
+      color: var(--muted);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .btn-clear:hover { border-color: #aaa; color: var(--text); }
+
+    /* ─── Manage Tab ─────────────────────────────── */
+    .manage-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .manage-count { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    .btn-refresh {
+      padding: 7px 14px;
+      background: var(--light);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text);
+      transition: background 0.2s;
+    }
+    .btn-refresh:hover { background: #e5e7eb; }
+
+    .news-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s;
+    }
+    .news-item:hover { transform: translateY(-1px); }
+    .news-item-thumb {
+      width: 80px;
+      height: 64px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--light);
+    }
+    .news-item-body { flex: 1; min-width: 0; }
+    .news-item-en { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .news-item-np { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .news-item-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .news-item-cat {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 10px;
+    }
+    .news-item-breaking {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--red);
+      background: var(--red-light);
+      padding: 2px 8px;
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+    }
+    .news-item-time { font-size: 11px; color: var(--muted); }
+    .btn-delete {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: #FEE2E2;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .btn-delete:hover { background: #FECACA; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .empty-icon  { font-size: 48px; margin-bottom: 12px; }
+    .empty-text  { font-size: 15px; font-weight: 600; }
+
+    /* Spinner */
+    .spinner { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+    /* Footer */
+    .app-footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- LOGIN SCREEN                                     -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-flag">🇳🇵</div>
+    <div class="login-title">के हुँदैछ नेपालमा</div>
+    <div class="login-sub">Admin Panel — Authorised access only</div>
+    <input
+      type="password"
+      id="pwd-input"
+      class="login-input"
+      placeholder="Enter password"
+      autocomplete="current-password"
+    />
+    <div class="login-error" id="login-error"></div>
+    <button class="btn-primary" id="login-btn" onclick="handleLogin()">
+      Unlock →
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- MAIN APP                                         -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <span class="header-logo">🇳🇵</span>
+      <div>
+        <div class="header-title">के हुँदैछ नेपालमा — Admin</div>
+        <div class="header-sub">News Management Portal</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="handleLogout()">Log out</button>
+  </header>
+
+  <!-- Tab nav -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('add', this)">✏️ Add News</button>
+    <button class="tab-btn" onclick="switchTab('manage', this)">📋 Manage</button>
+  </nav>
+
+  <!-- ── ADD NEWS TAB ── -->
+  <div id="tab-add" class="main">
+
+    <!-- Nepali content -->
+    <div class="card">
+      <div class="card-title">🇳🇵 नेपाली सामग्री</div>
+      <div class="form-grid">
+        <div class="field full">
+          <label>शीर्षक *</label>
+          <input type="text" id="title_np" placeholder="समाचारको शीर्षक लेख्नुहोस्..." oninput="updatePreview()" />
+        </div>
+        <div class="field full">
+          <label>सारांश * <span class="char-count" id="cnt-summary-np">(0 chars)</span></label>
+          <textarea id="summary_np" placeholder="समाचारको सारांश लेख्नुहोस् (३–५ वाक्य)..." oninput="updateCounter('summary_np','cnt-summary-np'); updatePreview()"></textarea>
+        </div>
+        <div class="field full">
+          <label>पूरा लेख (ऐच्छिक) <span class="char-count" id="cnt-body-np">(0 chars)</span></label>
+          <textarea id="body_np" class="tall" placeholder="विस्तृत लेख नेपालीमा लेख्नुहोस्..." oninput="updateCounter('body_np','cnt-body-np')"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- English content -->
+    <div class="card">
+      <div class="card-title">🇬🇧 English Content</div>
+      <div class="form-grid">
+        <div class="field full">
+          <label>Title *</label>
+          <input type="text" id="title_en" placeholder="Write the news headline..." oninput="updatePreview()" />
+        </div>
+        <div class="field full">
+          <label>Summary * <span class="char-count" id="cnt-summary-en">(0 chars)</span></label>
+          <textarea id="summary_en" placeholder="Write the news summary (3–5 sentences)..." oninput="updateCounter('summary_en','cnt-summary-en'); updatePreview()"></textarea>
+        </div>
+        <div class="field full">
+          <label>Full Article (Optional) <span class="char-count" id="cnt-body-en">(0 chars)</span></label>
+          <textarea id="body_en" class="tall" placeholder="Write the full article in English..." oninput="updateCounter('body_en','cnt-body-en')"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Image -->
+    <div class="card">
+      <div class="card-title">🖼️ Image URL (Optional)</div>
+      <div class="field">
+        <label>Direct image link (Unsplash, Imgur, Cloudinary)</label>
+        <input type="url" id="image_url" placeholder="https://images.unsplash.com/photo-..." oninput="updateImagePreview()" />
+      </div>
+      <img id="img-preview" class="img-preview" alt="Image preview" onerror="this.style.display='none'" />
+    </div>
+
+    <!-- Category & Priority -->
+    <div class="card">
+      <div class="card-title">🗂️ Category & Priority</div>
+      <label style="display:block;margin-bottom:10px;">Select Category *</label>
+      <div class="cat-grid" id="cat-grid"></div>
+
+      <div style="margin-top:16px;">
+        <div class="breaking-toggle" id="breaking-toggle" onclick="toggleBreaking()">
+          <span class="breaking-icon">🔴</span>
+          <div class="breaking-text">
+            <div class="breaking-label">Mark as Breaking News</div>
+            <div class="breaking-desc">Breaking news appears first with a red banner in the app</div>
+          </div>
+          <div class="breaking-check"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="card" id="preview-card" style="display:none;">
+      <div class="card-title">👁️ Preview</div>
+      <div class="preview-strip">
+        <div class="preview-label">How it will look</div>
+        <div class="preview-title" id="preview-title">—</div>
+        <div class="preview-summary" id="preview-summary">—</div>
+      </div>
+    </div>
+
+    <!-- Feedback -->
+    <div id="msg-error"   class="msg-error   msg-hidden"></div>
+    <div id="msg-success" class="msg-success msg-hidden"></div>
+
+    <!-- Buttons -->
+    <div class="btn-row">
+      <button class="btn-submit" id="submit-btn" onclick="handleSubmit()">
+        🚀 Publish News
+      </button>
+      <button class="btn-clear" onclick="clearForm()">Clear</button>
+    </div>
+  </div>
+
+  <!-- ── MANAGE TAB ── -->
+  <div id="tab-manage" class="main" style="display:none;">
+    <div class="manage-header">
+      <div class="manage-count" id="manage-count">Loading...</div>
+      <button class="btn-refresh" onclick="loadNewsList()">↺ Refresh</button>
+    </div>
+    <div id="news-list-container">
+      <div class="spinner">Loading articles...</div>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    🇳🇵 के हुँदैछ नेपालमा · Admin Portal · Authorised use only
+  </footer>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// 🔧 CONFIGURATION — paste your Firebase config here
+// ═══════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_AUTH_DOMAIN",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId:             "YOUR_APP_ID",
+};
+
+// ── Change this password ──────────────────────────
+const ADMIN_PASSWORD = "NepalAdmin@2082!";
+
+// ═══════════════════════════════════════════════════
+// CATEGORIES
+// ═══════════════════════════════════════════════════
+const CATEGORIES = [
+  { id:'politics',       emoji:'🏛️', label:'Politics',       color:'#7C3AED' },
+  { id:'infrastructure', emoji:'🏗️', label:'Infrastructure', color:'#EA580C' },
+  { id:'sports',         emoji:'⚽', label:'Sports',         color:'#16A34A' },
+  { id:'technology',     emoji:'💻', label:'Technology',     color:'#0284C7' },
+  { id:'agriculture',    emoji:'🌾', label:'Agriculture',    color:'#65A30D' },
+  { id:'tourism',        emoji:'🏔️', label:'Tourism',        color:'#D97706' },
+  { id:'diplomacy',      emoji:'🤝', label:'Diplomacy',      color:'#0891B2' },
+  { id:'foreign_affairs',emoji:'🌏', label:'Foreign Affairs',color:'#4F46E5' },
+  { id:'economy',        emoji:'💰', label:'Economy',        color:'#059669' },
+  { id:'health',         emoji:'🏥', label:'Health',         color:'#DC2626' },
+  { id:'education',      emoji:'📚', label:'Education',      color:'#7C3AED' },
+  { id:'environment',    emoji:'🌿', label:'Environment',    color:'#15803D' },
+  { id:'cabinet',        emoji:'⚖️', label:'Cabinet',        color:'#9333EA' },
+  { id:'parliament',     emoji:'🏦', label:'Parliament',     color:'#1D4ED8' },
+];
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let db            = null;
+let selectedCat   = 'politics';
+let isBreaking    = false;
+let isSubmitting  = false;
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  buildCategoryGrid();
+
+  // Allow Enter key on password field
+  document.getElementById('pwd-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleLogin();
+  });
+});
+
+function initFirebase() {
+  if (!firebase.apps.length) {
+    firebase.initializeApp(FIREBASE_CONFIG);
+  }
+  db = firebase.firestore();
+}
+
+// ═══════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════
+function handleLogin() {
+  const pwd = document.getElementById('pwd-input').value;
+  const err = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+
+  if (pwd === ADMIN_PASSWORD) {
+    err.textContent = '';
+    btn.textContent = 'Unlocking...';
+    btn.disabled = true;
+
+    try {
+      initFirebase();
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').classList.add('visible');
+      loadNewsList();
+    } catch (e) {
+      err.textContent = 'Firebase initialisation failed: ' + e.message;
+      btn.textContent = 'Unlock →';
+      btn.disabled = false;
+    }
+  } else {
+    err.textContent = 'Incorrect password. Try again.';
+    document.getElementById('pwd-input').value = '';
+    // Shake the card
+    const card = document.querySelector('.login-card');
+    card.style.animation = 'none';
+    card.offsetHeight; // force reflow
+    card.style.animation = 'shake 0.4s ease';
+  }
+}
+
+function handleLogout() {
+  if (!confirm('Log out?')) return;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('pwd-input').value = '';
+  document.getElementById('login-error').textContent = '';
+}
+
+// ═══════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-add').style.display    = tab === 'add'    ? 'block' : 'none';
+  document.getElementById('tab-manage').style.display = tab === 'manage' ? 'block' : 'none';
+  if (tab === 'manage') loadNewsList();
+}
+
+// ═══════════════════════════════════════════════════
+// CATEGORY GRID
+// ═══════════════════════════════════════════════════
+function buildCategoryGrid() {
+  const grid = document.getElementById('cat-grid');
+  grid.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const chip = document.createElement('div');
+    chip.className = 'cat-chip' + (cat.id === selectedCat ? ' selected' : '');
+    chip.dataset.id = cat.id;
+    chip.style.cssText = cat.id === selectedCat
+      ? `background:${cat.color}; border-color:${cat.color};`
+      : '';
+    chip.innerHTML = `<span>${cat.emoji}</span><span>${cat.label}</span>`;
+    chip.onclick = () => selectCategory(cat.id);
+    grid.appendChild(chip);
+  });
+}
+
+function selectCategory(id) {
+  selectedCat = id;
+  buildCategoryGrid();
+}
+
+// ═══════════════════════════════════════════════════
+// BREAKING TOGGLE
+// ═══════════════════════════════════════════════════
+function toggleBreaking() {
+  isBreaking = !isBreaking;
+  const el = document.getElementById('breaking-toggle');
+  el.classList.toggle('on', isBreaking);
+}
+
+// ═══════════════════════════════════════════════════
+// LIVE PREVIEW & HELPERS
+// ═══════════════════════════════════════════════════
+function updateCounter(fieldId, counterId) {
+  const len = document.getElementById(fieldId).value.length;
+  document.getElementById(counterId).textContent = `(${len} chars)`;
+}
+
+function updatePreview() {
+  const titleNp   = document.getElementById('title_np').value.trim();
+  const titleEn   = document.getElementById('title_en').value.trim();
+  const summaryNp = document.getElementById('summary_np').value.trim();
+  const card      = document.getElementById('preview-card');
+
+  if (titleNp || titleEn) {
+    card.style.display = 'block';
+    document.getElementById('preview-title').textContent   = titleNp || titleEn;
+    document.getElementById('preview-summary').textContent = summaryNp || '—';
+  } else {
+    card.style.display = 'none';
+  }
+}
+
+function updateImagePreview() {
+  const url = document.getElementById('image_url').value.trim();
+  const img = document.getElementById('img-preview');
+  if (url) {
+    img.src = url;
+    img.style.display = 'block';
+  } else {
+    img.style.display = 'none';
+  }
+}
+
+function showMsg(type, text) {
+  const errEl = document.getElementById('msg-error');
+  const sucEl = document.getElementById('msg-success');
+  errEl.classList.add('msg-hidden');
+  sucEl.classList.add('msg-hidden');
+  if (type === 'error') {
+    errEl.textContent = text;
+    errEl.classList.remove('msg-hidden');
+  } else {
+    sucEl.textContent = text;
+    sucEl.classList.remove('msg-hidden');
+    setTimeout(() => sucEl.classList.add('msg-hidden'), 5000);
+  }
+}
+
+function clearForm() {
+  ['title_np','summary_np','body_np','title_en','summary_en','body_en','image_url']
+    .forEach(id => document.getElementById(id).value = '');
+  selectedCat = 'politics';
+  isBreaking  = false;
+  buildCategoryGrid();
+  document.getElementById('breaking-toggle').classList.remove('on');
+  document.getElementById('preview-card').style.display = 'none';
+  document.getElementById('img-preview').style.display  = 'none';
+  ['cnt-summary-np','cnt-body-np','cnt-summary-en','cnt-body-en']
+    .forEach(id => document.getElementById(id).textContent = '(0 chars)');
+  document.getElementById('msg-error').classList.add('msg-hidden');
+  document.getElementById('msg-success').classList.add('msg-hidden');
+}
+
+// ═══════════════════════════════════════════════════
+// SUBMIT NEWS
+// ═══════════════════════════════════════════════════
+async function handleSubmit() {
+  if (isSubmitting) return;
+
+  const fields = {
+    title_np:   document.getElementById('title_np').value.trim(),
+    summary_np: document.getElementById('summary_np').value.trim(),
+    title_en:   document.getElementById('title_en').value.trim(),
+    summary_en: document.getElementById('summary_en').value.trim(),
+    body_np:    document.getElementById('body_np').value.trim(),
+    body_en:    document.getElementById('body_en').value.trim(),
+    image_url:  document.getElementById('image_url').value.trim(),
+  };
+
+  if (!fields.title_np || !fields.summary_np || !fields.title_en || !fields.summary_en) {
+    showMsg('error', '⚠️ Please fill in all four required fields (both language titles and summaries).');
+    return;
+  }
+
+  isSubmitting = true;
+  const btn    = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Publishing...';
+
+  try {
+    await db.collection('news').add({
+      ...fields,
+      category:    selectedCat,
+      is_breaking: isBreaking,
+      created_at:  firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    showMsg('success', '✅ News published successfully! It will appear in the app immediately.');
+    clearForm();
+  } catch (err) {
+    showMsg('error', '❌ Failed to publish: ' + err.message);
+  } finally {
+    isSubmitting      = false;
+    btn.disabled      = false;
+    btn.textContent   = '🚀 Publish News';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// MANAGE — LOAD NEWS LIST
+// ═══════════════════════════════════════════════════
+async function loadNewsList() {
+  const container = document.getElementById('news-list-container');
+  const countEl   = document.getElementById('manage-count');
+  container.innerHTML = '<div class="spinner">Loading articles...</div>';
+
+  try {
+    const snapshot = await db.collection('news')
+      .orderBy('created_at', 'desc')
+      .get();
+
+    countEl.textContent = `${snapshot.size} articles published`;
+
+    if (snapshot.empty) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <div class="empty-text">No articles yet</div>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = '';
+    snapshot.forEach(doc => {
+      const item = { id: doc.id, ...doc.data() };
+      container.appendChild(buildNewsItem(item));
+    });
+
+  } catch (err) {
+    container.innerHTML = `<div class="msg-error">Failed to load: ${err.message}</div>`;
+  }
+}
+
+function buildNewsItem(item) {
+  const cat       = CATEGORIES.find(c => c.id === item.category) || CATEGORIES[0];
+  const timeLabel = item.created_at?.toDate
+    ? item.created_at.toDate().toLocaleString('en-US', { dateStyle:'medium', timeStyle:'short' })
+    : 'Unknown date';
+
+  const fallbacks = {
+    politics:'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=200&q=60',
+    default: 'https://images.unsplash.com/photo-1476362555312-ab9e108a0b7e?w=200&q=60',
+  };
+  const imgSrc = item.image_url || fallbacks[item.category] || fallbacks.default;
+
+  const el = document.createElement('div');
+  el.className = 'news-item';
+  el.innerHTML = `
+    <img class="news-item-thumb" src="${escHtml(imgSrc)}" alt="" onerror="this.src='${fallbacks.default}'" />
+    <div class="news-item-body">
+      <div class="news-item-en">${escHtml(item.title_en || '—')}</div>
+      <div class="news-item-np">${escHtml(item.title_np || '—')}</div>
+      <div class="news-item-meta">
+        <span class="news-item-cat" style="background:${cat.color}20;color:${cat.color}">
+          ${cat.emoji} ${cat.label}
+        </span>
+        ${item.is_breaking ? '<span class="news-item-breaking">🔴 BREAKING</span>' : ''}
+        <span class="news-item-time">${escHtml(timeLabel)}</span>
+      </div>
+    </div>
+    <button class="btn-delete" onclick="deleteArticle('${escHtml(item.id)}', this)" title="Delete">🗑</button>
+  `;
+  return el;
+}
+
+async function deleteArticle(id, btn) {
+  if (!confirm('Delete this article? This cannot be undone.')) return;
+  btn.disabled    = true;
+  btn.textContent = '...';
+  try {
+    await db.collection('news').doc(id).delete();
+    btn.closest('.news-item').remove();
+    const countEl = document.getElementById('manage-count');
+    const current = parseInt(countEl.textContent) || 0;
+    countEl.textContent = `${Math.max(0, current - 1)} articles published`;
+  } catch (err) {
+    alert('Delete failed: ' + err.message);
+    btn.disabled    = false;
+    btn.textContent = '🗑';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+</script>
+
+<!-- Shake animation for wrong password -->
+<style>
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-10px); }
+  40%      { transform: translateX(10px); }
+  60%      { transform: translateX(-8px); }
+  80%      { transform: translateX(8px); }
+}
+</style>
+
+</body>
+</html>

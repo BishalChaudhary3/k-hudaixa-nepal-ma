@@ -4,64 +4,16 @@
 
 export const CATEGORIES = [
     {
-      id: 'all',
-      label_en: 'All',
-      label_np: 'सबै',
+      id: 'nepal',
+      label_en: 'Nepal',
+      label_np: 'नेपाल',
       color: '#C1121F',
     },
     {
-      id: 'infrastructure',
-      label_en: 'Infrastructure',
-      label_np: 'पूर्वाधार',
-      color: '#EA580C',
-    },
-    {
-      id: 'sports',
-      label_en: 'Sports',
-      label_np: 'खेलकुद',
-      color: '#16A34A',
-    },
-    {
-      id: 'technology',
-      label_en: 'Technology',
-      label_np: 'प्रविधि',
-      color: '#0284C7',
-    },
-    {
-      id: 'agriculture',
-      label_en: 'Agriculture',
-      label_np: 'कृषि',
-      color: '#65A30D',
-    },
-    {
-      id: 'tourism',
-      label_en: 'Tourism',
-      label_np: 'पर्यटन',
-      color: '#D97706',
-    },
-    {
-      id: 'foreign_affairs',
-      label_en: 'Foreign Affairs',
-      label_np: 'विदेश मामिला',
-      color: '#4F46E5',
-    },
-    {
-      id: 'economy',
-      label_en: 'Economy',
-      label_np: 'अर्थतन्त्र',
-      color: '#059669',
-    },
-    {
-      id: 'education',
-      label_en: 'Education',
-      label_np: 'शिक्षा',
-      color: '#7C3AED',
-    },
-    {
-      id: 'cabinet',
-      label_en: 'Cabinet',
-      label_np: 'मन्त्रिमण्डल',
-      color: '#9333EA',
+      id: 'world',
+      label_en: 'World',
+      label_np: 'विश्व',
+      color: '#C1121F',
     },
     {
       id: 'Opportunity',

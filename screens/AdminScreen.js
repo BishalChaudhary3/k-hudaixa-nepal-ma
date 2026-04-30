@@ -24,18 +24,19 @@ import { fetchNews } from '../services/firebase';
 import { CATEGORIES } from '../constants/categories';
 
 // ─── Change this to your own secret password ──────
-const ADMIN_PASSWORD = 'meronepal';
+const ADMIN_PASSWORD = 'nepal2081';
 
 // ─── Empty form state ─────────────────────────────
 const EMPTY_FORM = {
-  title_np:  '',
-  summary_np:'',
-  title_en:  '',
-  summary_en:'',
-  body_np:   '',
-  body_en:   '',
-  image_url: '',
-  category:  'politics',
+  title_np:   '',
+  summary_np: '',
+  title_en:   '',
+  summary_en: '',
+  body_np:    '',
+  body_en:    '',
+  image_url:  '',
+  category:   'politics',
+  is_breaking: false,
 };
 
 export default function AdminScreen({ onClose }) {
@@ -123,7 +124,7 @@ export default function AdminScreen({ onClose }) {
     setSubmitting(true);
     try {
       await addNews(form);
-      setSuccessMsg('News published successfully!');
+      setSuccessMsg('✅ News published successfully!');
       setForm(EMPTY_FORM);
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
@@ -312,7 +313,7 @@ export default function AdminScreen({ onClose }) {
             {/* Section: English */}
             <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
               <View style={styles.sectionHeader}>
-               
+                <Text style={styles.sectionFlag}>🇬🇧</Text>
                 <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>English Content</Text>
               </View>
 
@@ -345,7 +346,7 @@ export default function AdminScreen({ onClose }) {
             {/* Section: Full Article Body */}
             <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
               <View style={styles.sectionHeader}>
-              
+                <Text style={styles.sectionFlag}>📝</Text>
                 <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Full Article (Optional)</Text>
               </View>
               <Text style={[styles.sectionHint, { color: theme.textMuted }]}>
@@ -378,6 +379,7 @@ export default function AdminScreen({ onClose }) {
             {/* Section: Image URL */}
             <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
               <View style={styles.sectionHeader}>
+                <Text style={styles.sectionFlag}>🖼️</Text>
                 <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Image URL (Optional)</Text>
               </View>
               <Text style={[styles.sectionHint, { color: theme.textMuted }]}>
@@ -402,8 +404,68 @@ export default function AdminScreen({ onClose }) {
               ) : null}
             </View>
 
-            {/* Preview strip */}
-            {(form.title_en || form.title_np) ? (
+            {/* Section: Category picker */}
+            <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionFlag}>🗂️</Text>
+                <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Category & Priority</Text>
+              </View>
+
+              {/* Category grid */}
+              <Text style={labelStyle}>Category *</Text>
+              <View style={styles.categoryGrid}>
+                {CATEGORIES.filter(c => c.id !== 'all').map(cat => (
+                  <TouchableOpacity
+                    key={cat.id}
+                    onPress={() => updateField('category', cat.id)}
+                    style={[
+                      styles.catChip,
+                      {
+                        backgroundColor: form.category === cat.id ? cat.color : theme.surface,
+                        borderColor: form.category === cat.id ? cat.color : theme.border,
+                      },
+                    ]}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.catChipEmoji}>{cat.emoji}</Text>
+                    <Text style={[styles.catChipText, { color: form.category === cat.id ? '#FFF' : theme.textSecondary }]}>
+                      {cat.label_en}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Breaking toggle */}
+              <TouchableOpacity
+                style={[
+                  styles.breakingToggle,
+                  {
+                    backgroundColor: form.is_breaking ? '#C1121F15' : theme.surface,
+                    borderColor: form.is_breaking ? '#C1121F' : theme.border,
+                  },
+                ]}
+                onPress={() => updateField('is_breaking', !form.is_breaking)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.breakingToggleIcon}>🔴</Text>
+                <View style={styles.breakingToggleText}>
+                  <Text style={[styles.breakingToggleTitle, { color: form.is_breaking ? '#C1121F' : theme.textPrimary }]}>
+                    Mark as Breaking News
+                  </Text>
+                  <Text style={[styles.breakingToggleSub, { color: theme.textMuted }]}>
+                    Breaking news appears first with a red banner
+                  </Text>
+                </View>
+                <View style={[
+                  styles.breakingToggleCheck,
+                  { backgroundColor: form.is_breaking ? '#C1121F' : theme.border },
+                ]}>
+                  <Text style={styles.breakingToggleCheckText}>
+                    {form.is_breaking ? '✓' : ''}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
               <View style={[styles.previewStrip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Text style={[styles.previewLabel, { color: theme.textMuted }]}>PREVIEW</Text>
                 <Text style={[styles.previewTitle, { color: theme.textPrimary }]} numberOfLines={2}>
@@ -415,7 +477,6 @@ export default function AdminScreen({ onClose }) {
                   </Text>
                 ) : null}
               </View>
-            ) : null}
 
             {/* Feedback */}
             {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
@@ -431,7 +492,7 @@ export default function AdminScreen({ onClose }) {
               {submitting ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.submitBtnText}>Publish News</Text>
+                <Text style={styles.submitBtnText}>🚀  Publish News</Text>
               )}
             </TouchableOpacity>
 
@@ -647,6 +708,41 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 12,
   },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
+  catChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  catChipEmoji: { fontSize: 12 },
+  catChipText:  { fontSize: 11, fontWeight: '600' },
+  breakingToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
+    gap: 12,
+    marginTop: 4,
+  },
+  breakingToggleIcon:  { fontSize: 22 },
+  breakingToggleText:  { flex: 1 },
+  breakingToggleTitle: { fontSize: 14, fontWeight: '700', marginBottom: 2 },
+  breakingToggleSub:   { fontSize: 11, lineHeight: 15 },
+  breakingToggleCheck: {
+    width: 24, height: 24, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  breakingToggleCheckText: { color: '#FFF', fontSize: 13, fontWeight: '800' },
   charCount: {
     fontSize: 11,
     textAlign: 'right',

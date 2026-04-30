@@ -1,5 +1,5 @@
 // ===================================================
-// 🗂️ CategoryBar – Horizontal Scrollable Category Pills
+// 🗂️ CategoryBar – Editorial Text Navigation
 // ===================================================
 
 import React, { useRef, useEffect } from 'react';
@@ -20,16 +20,16 @@ export default function CategoryBar({ selected, onSelect }) {
   const { isNepali } = useLanguage();
   const scrollRef = useRef(null);
 
-  // Scroll to the selected pill so it stays visible
+  // Scroll to the selected category
   useEffect(() => {
     const index = CATEGORIES.findIndex(c => c.id === selected);
     if (scrollRef.current && index > 0) {
-      scrollRef.current.scrollTo({ x: index * 110, animated: true });
+      scrollRef.current.scrollTo({ x: index * 85, animated: true });
     }
   }, [selected]);
 
   return (
-    <View style={[styles.wrapper, { backgroundColor: theme.cardBackground, borderBottomColor: theme.border }]}>
+    <View style={[styles.wrapper, { borderBottomColor: theme.border || '#e0e0e0' }]}>
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -39,7 +39,7 @@ export default function CategoryBar({ selected, onSelect }) {
         {CATEGORIES.map((cat, index) => {
           const isActive = selected === cat.id;
           return (
-            <CategoryPill
+            <CategoryItem
               key={cat.id}
               cat={cat}
               isActive={isActive}
@@ -55,9 +55,9 @@ export default function CategoryBar({ selected, onSelect }) {
   );
 }
 
-function CategoryPill({ cat, isActive, isNepali, theme, onPress, index }) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+function CategoryItem({ cat, isActive, isNepali, theme, onPress, index }) {
   const mountAnim = useRef(new Animated.Value(0)).current;
+  const underlineAnim = useRef(new Animated.Value(isActive ? 1 : 0)).current;
 
   useEffect(() => {
     Animated.timing(mountAnim, {
@@ -68,36 +68,56 @@ function CategoryPill({ cat, isActive, isNepali, theme, onPress, index }) {
     }).start();
   }, []);
 
+  useEffect(() => {
+    Animated.spring(underlineAnim, {
+      toValue: isActive ? 1 : 0,
+      tension: 80,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, [isActive]);
+
+  const label = isNepali ? cat.label_np : cat.label_en;
+  
+  // Simple press animation
   const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, { toValue: 0.9, duration: 80, useNativeDriver: true }),
-      Animated.spring(scaleAnim, { toValue: 1, tension: 120, friction: 6, useNativeDriver: true }),
-    ]).start();
     onPress();
   };
 
   return (
-    <Animated.View style={{ opacity: mountAnim, transform: [{ scale: scaleAnim }] }}>
+    <Animated.View 
+      style={[
+        styles.itemContainer,
+        { opacity: mountAnim }
+      ]}
+    >
       <TouchableOpacity
         onPress={handlePress}
-        activeOpacity={0.8}
-        style={[
-          styles.pill,
-          isActive
-            ? { backgroundColor: cat.color, borderColor: cat.color }
-            : { backgroundColor: theme.surface, borderColor: theme.border },
-        ]}
+        activeOpacity={0.6}
+        style={styles.item}
       >
-        <Text style={styles.pillEmoji}>{cat.emoji}</Text>
         <Text
           style={[
-            styles.pillLabel,
-            { color: isActive ? '#FFFFFF' : theme.textSecondary },
-            isActive && styles.pillLabelActive,
+            styles.itemLabel,
+            { color: isActive ? theme.textPrimary : theme.textMuted || '#666666' },
+            isActive && styles.itemLabelActive,
           ]}
         >
-          {isNepali ? cat.label_np : cat.label_en}
+          {label}
         </Text>
+        
+        {/* Underline indicator */}
+        {isActive && (
+          <Animated.View 
+            style={[
+              styles.underline,
+              { 
+                backgroundColor: theme.primary || '#1a1a1a',
+                transform: [{ scaleX: underlineAnim }]
+              }
+            ]} 
+          />
+        )}
       </TouchableOpacity>
     </Animated.View>
   );
@@ -105,35 +125,39 @@ function CategoryPill({ cat, isActive, isNepali, theme, onPress, index }) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    borderBottomWidth: 0.5,
-    zIndex: 10,
+    borderBottomWidth: 1,
+    backgroundColor: 'transparent',
   },
   scrollContent: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    gap: 24,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 13,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    gap: 5,
+  itemContainer: {
+    flexShrink: 0,
   },
-  pillEmoji: {
+  item: {
+    paddingVertical: 6,
+    position: 'relative',
+  },
+  itemLabel: {
     fontSize: 13,
-  },
-  pillLabel: {
-    fontSize: 12,
     fontWeight: '500',
-    letterSpacing: 0.1,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
-  pillLabelActive: {
+  itemLabelActive: {
     fontWeight: '700',
-    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  underline: {
+    position: 'absolute',
+    bottom: -2,
+    left: 0,
+    right: 0,
+    height: 2,
+    transform: [{ scaleX: 1 }],
   },
 });

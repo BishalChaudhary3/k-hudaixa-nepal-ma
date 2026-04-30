@@ -1,5 +1,5 @@
 // ===================================================
-// 🔀 ToggleSwitch – Language Toggle + Dark Mode Button
+// 🔀 ToggleSwitch – Minimal Language & Theme Controls
 // ===================================================
 
 import React, { useRef, useEffect } from 'react';
@@ -12,33 +12,36 @@ import {
 } from 'react-native';
 import { useLanguage } from '../hooks/useLanguage';
 import { useTheme } from '../hooks/useTheme';
+import Entypo from '@expo/vector-icons/Entypo';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 export default function ToggleSwitch() {
   const { isNepali, toggleLanguage } = useLanguage();
   const { isDark, toggleTheme } = useTheme();
 
-  // Language slide animation
+  // Language indicator animation
   const slideAnim = useRef(new Animated.Value(isNepali ? 0 : 1)).current;
-  const fadeNp = useRef(new Animated.Value(isNepali ? 1 : 0.45)).current;
-  const fadeEn = useRef(new Animated.Value(isNepali ? 0.45 : 1)).current;
-
-  // Dark mode button pulse
-  const themePulse = useRef(new Animated.Value(1)).current;
+  const npWeight = useRef(new Animated.Value(isNepali ? 1 : 0.5)).current;
+  const enWeight = useRef(new Animated.Value(isNepali ? 0.5 : 1)).current;
+  
+  // Theme toggle animation
+  const themeSlideAnim = useRef(new Animated.Value(isDark ? 1 : 0)).current;
+  const themeScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.spring(slideAnim, {
         toValue: isNepali ? 0 : 1,
         useNativeDriver: false,
-        tension: 60,
-        friction: 8,
+        tension: 80,
+        friction: 10,
       }),
-      Animated.timing(fadeNp, {
+      Animated.timing(npWeight, {
         toValue: isNepali ? 1 : 0.5,
         duration: 200,
         useNativeDriver: true,
       }),
-      Animated.timing(fadeEn, {
+      Animated.timing(enWeight, {
         toValue: isNepali ? 0.5 : 1,
         duration: 200,
         useNativeDriver: true,
@@ -46,40 +49,80 @@ export default function ToggleSwitch() {
     ]).start();
   }, [isNepali]);
 
-  const indicatorLeft = slideAnim.interpolate({
+  useEffect(() => {
+    Animated.spring(themeSlideAnim, {
+      toValue: isDark ? 1 : 0,
+      useNativeDriver: false,
+      tension: 80,
+      friction: 10,
+    }).start();
+  }, [isDark]);
+
+  const languageIndicatorLeft = slideAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [2, 58],
+    outputRange: [2, 52],
+  });
+
+  const themeIndicatorLeft = themeSlideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [2, 34],
   });
 
   const handleThemeToggle = () => {
     Animated.sequence([
-      Animated.timing(themePulse, { toValue: 0.82, duration: 100, useNativeDriver: true }),
-      Animated.spring(themePulse, { toValue: 1, useNativeDriver: true, tension: 120, friction: 6 }),
+      Animated.timing(themeScale, { toValue: 0.92, duration: 100, useNativeDriver: true }),
+      Animated.spring(themeScale, { toValue: 1, useNativeDriver: true, tension: 100, friction: 8 }),
     ]).start();
     toggleTheme();
   };
 
   return (
     <View style={styles.wrapper}>
-      {/* ── Language Toggle ── */}
-      <TouchableOpacity onPress={toggleLanguage} activeOpacity={0.85}>
-        <View style={styles.track}>
-          <Animated.View style={[styles.indicator, { left: indicatorLeft }]} />
-          <Animated.View style={[styles.labelWrap, { opacity: fadeNp }]}>
-        
+      {/* Language Toggle */}
+      <TouchableOpacity onPress={toggleLanguage} activeOpacity={0.7}>
+        <View style={styles.languageTrack}>
+          <Animated.View style={[styles.languageIndicator, { left: languageIndicatorLeft }]} />
+          <View style={styles.labelContainer}>
             <Text style={[styles.label, isNepali && styles.labelActive]}>नेपाली</Text>
-          </Animated.View>
-          <Animated.View style={[styles.labelWrap, { opacity: fadeEn }]}>
-            
+          </View>
+          <View style={styles.labelContainer}>
             <Text style={[styles.label, !isNepali && styles.labelActive]}>ENG</Text>
-          </Animated.View>
+          </View>
         </View>
       </TouchableOpacity>
 
-      {/* ── Dark / Light Mode Button ── */}
-      <TouchableOpacity onPress={handleThemeToggle} activeOpacity={0.8}>
-        <Animated.View style={[styles.themeBtn, { transform: [{ scale: themePulse }] }]}>
-          <Text style={styles.themeIcon}>{isDark ? '☼' : '☽'}</Text>
+      {/* Theme Toggle */}
+      <TouchableOpacity onPress={handleThemeToggle} activeOpacity={0.7}>
+        <Animated.View style={[styles.themeButton, { transform: [{ scale: themeScale }] }]}>
+          {/* Sliding indicator */}
+          <Animated.View
+            style={[
+              styles.themeIndicator,
+              {
+                left: themeIndicatorLeft,
+                backgroundColor: isDark ? '#374151' : '#ffffff',
+              },
+            ]}
+          />
+          {/* Icons container - always visible with proper ordering */}
+          <View style={styles.iconsContainer}>
+            <View style={styles.iconWrapper}>
+              <Entypo
+                name="light-up"
+                size={16}
+                color={!isDark ? '#1a1a1a' : '#9CA3AF'}
+                style={[styles.icon, !isDark && styles.iconActive]}
+              />
+            </View>
+            <View style={styles.iconWrapper}>
+              <MaterialIcons
+                name="dark-mode"
+                size={16}
+                color={isDark ? '#ffffff' : '#9CA3AF'}
+                style={[styles.icon, isDark && styles.iconActive]}
+              />
+            </View>
+          </View>
         </Animated.View>
       </TouchableOpacity>
     </View>
@@ -92,58 +135,80 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  track: {
+
+  // Language toggle
+  languageTrack: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
-    height: 34,
-    width: 112,
-    paddingHorizontal: 2,
+    backgroundColor: '#e5e5e5',
+    borderRadius: 4,
+    height: 30,
+    width: 104,
+    padding: 2,
     position: 'relative',
   },
-  indicator: {
+  languageIndicator: {
     position: 'absolute',
     width: 50,
-    height: 28,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.28)',
+    height: 26,
+    borderRadius: 3,
+    backgroundColor: '#ffffff',
     zIndex: 0,
+    shadowOpacity: 0,
+    elevation: 0,
   },
-  labelWrap: {
-    flexDirection: 'row',
+  labelContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 52,
+    width: 50,
     zIndex: 1,
-    gap: 3,
-  },
-  flag: {
-    fontSize: 12,
   },
   label: {
-    color: 'rgba(255,255,255,0.65)',
     fontSize: 11,
-    fontWeight: '500',
-    letterSpacing: 0.3,
+    fontWeight: '400',
+    letterSpacing: 0.2,
+    color: '#666666',
   },
   labelActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '500',
+    color: '#1a1a1a',
   },
-  themeBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
+
+  // Theme toggle
+  themeButton: {
+    backgroundColor: '#e5e5e5',
+    borderRadius: 4,
+    height: 30,
+    position: 'relative',
+    minWidth: 70,
+  },
+  themeIndicator: {
+    position: 'absolute',
+    width: 32,
+    height: 26,
+    borderRadius: 3,
+    top: 2,
+    zIndex: 0,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  iconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 6,
+    height: 30,
+    zIndex: 1,
+  },
+  iconWrapper: {
+    width: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  themeIcon: {
-    fontSize: 16,
+  icon: {
+    opacity: 0.5,
+  },
+  iconActive: {
+    opacity: 1,
   },
 });

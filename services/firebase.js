@@ -156,9 +156,9 @@ export async function seedDummyData() {
     const newsRef = collection(db, 'news');
     const promises = DUMMY_NEWS.map(item => addDoc(newsRef, item));
     await Promise.all(promises);
-    console.log('✅ Dummy data seeded successfully!');
+    console.log(' Dummy data seeded successfully!');
   } catch (error) {
-    console.error('❌ Seeding failed:', error.message);
+    console.error(' Seeding failed:', error.message);
   }
 }
 
