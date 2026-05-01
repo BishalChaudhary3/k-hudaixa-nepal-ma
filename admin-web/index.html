@@ -456,10 +456,6 @@
           <label>सारांश * <span class="char-count" id="cnt-summary-np">(0 chars)</span></label>
           <textarea id="summary_np" placeholder="समाचारको सारांश लेख्नुहोस् (३–५ वाक्य)..." oninput="updateCounter('summary_np','cnt-summary-np'); updatePreview()"></textarea>
         </div>
-        <div class="field full">
-          <label>पूरा लेख (ऐच्छिक) <span class="char-count" id="cnt-body-np">(0 chars)</span></label>
-          <textarea id="body_np" class="tall" placeholder="विस्तृत लेख नेपालीमा लेख्नुहोस्..." oninput="updateCounter('body_np','cnt-body-np')"></textarea>
-        </div>
       </div>
     </div>
 
@@ -474,10 +470,6 @@
         <div class="field full">
           <label>Summary * <span class="char-count" id="cnt-summary-en">(0 chars)</span></label>
           <textarea id="summary_en" placeholder="Write the news summary (3–5 sentences)..." oninput="updateCounter('summary_en','cnt-summary-en'); updatePreview()"></textarea>
-        </div>
-        <div class="field full">
-          <label>Full Article (Optional) <span class="char-count" id="cnt-body-en">(0 chars)</span></label>
-          <textarea id="body_en" class="tall" placeholder="Write the full article in English..." oninput="updateCounter('body_en','cnt-body-en')"></textarea>
         </div>
       </div>
     </div>
@@ -554,16 +546,16 @@
 // 🔧 CONFIGURATION — paste your Firebase config here
 // ═══════════════════════════════════════════════════
 const FIREBASE_CONFIG = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_AUTH_DOMAIN",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId:             "YOUR_APP_ID",
+  apiKey: "AIzaSyCr8UjuoF9_NN1yeQq8E3YK0PbBlo5gzFo",
+  authDomain: "ke-hudai-cha-nepal.firebaseapp.com",
+  projectId: "ke-hudai-cha-nepal",
+  storageBucket: "ke-hudai-cha-nepal.firebasestorage.app",
+  messagingSenderId: "843145870503",
+  appId: "1:843145870503:web:c75bf3b31b09dbc68aef82",
 };
 
 // ── Change this password ──────────────────────────
-const ADMIN_PASSWORD = "NepalAdmin@2082!";
+const ADMIN_PASSWORD = "nepal2083";
 
 // ═══════════════════════════════════════════════════
 // CATEGORIES
@@ -748,16 +740,16 @@ function showMsg(type, text) {
 }
 
 function clearForm() {
-  ['title_np','summary_np','body_np','title_en','summary_en','body_en','image_url']
-    .forEach(id => document.getElementById(id).value = '');
+  ['title_np','summary_np','title_en','summary_en','image_url']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   selectedCat = 'politics';
   isBreaking  = false;
   buildCategoryGrid();
   document.getElementById('breaking-toggle').classList.remove('on');
   document.getElementById('preview-card').style.display = 'none';
   document.getElementById('img-preview').style.display  = 'none';
-  ['cnt-summary-np','cnt-body-np','cnt-summary-en','cnt-body-en']
-    .forEach(id => document.getElementById(id).textContent = '(0 chars)');
+  ['cnt-summary-np','cnt-summary-en']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '(0 chars)'; });
   document.getElementById('msg-error').classList.add('msg-hidden');
   document.getElementById('msg-success').classList.add('msg-hidden');
 }
@@ -773,8 +765,6 @@ async function handleSubmit() {
     summary_np: document.getElementById('summary_np').value.trim(),
     title_en:   document.getElementById('title_en').value.trim(),
     summary_en: document.getElementById('summary_en').value.trim(),
-    body_np:    document.getElementById('body_np').value.trim(),
-    body_en:    document.getElementById('body_en').value.trim(),
     image_url:  document.getElementById('image_url').value.trim(),
   };
 
